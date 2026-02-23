@@ -1,5 +1,6 @@
 """Config flow for Smart Holiday integration."""
 
+import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 
