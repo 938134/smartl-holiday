@@ -1,4 +1,4 @@
-"""Sensor platform for SmartL Holiday."""
+"""Sensor platform for Smart Holiday."""
 
 import logging
 import yaml
@@ -22,7 +22,6 @@ from .const import (
     ATTR_IS_HOLIDAY,
     ATTR_IS_WORKDAY_SPECIAL,
     ATTR_UPCOMING,
-    CONF_CALENDAR_FILE,
     DEFAULT_NAME,
     DOMAIN,
     STATE_WORKDAY,
@@ -43,16 +42,15 @@ async def async_setup_platform(
     discovery_info: Optional[DiscoveryInfoType] = None,
 ) -> None:
     """Set up the sensor and calendar platforms."""
-    name = config.get(CONF_NAME, DEFAULT_NAME)
-    calendar_file = config.get(CONF_CALENDAR_FILE)
+    name = DEFAULT_NAME
     
-    # 获取绝对路径
+    # 使用组件目录下的 calendar.yaml
     component_dir = os.path.dirname(__file__)
-    calendar_path = os.path.join(component_dir, calendar_file)
+    calendar_path = os.path.join(component_dir, "calendar.yaml")
     
     async_add_entities([
-        SmartLHolidaySensor(name, calendar_path, hass),
-        SmartLHolidayCalendar(name, calendar_path, hass)
+        SmartHolidaySensor(name, calendar_path, hass),
+        SmartHolidayCalendar(name, calendar_path, hass)
     ], True)
 
 
@@ -62,28 +60,27 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the sensor and calendar platforms from config entry."""
-    name = entry.data.get(CONF_NAME, DEFAULT_NAME)
-    calendar_file = entry.data.get(CONF_CALENDAR_FILE)
+    name = DEFAULT_NAME
     
-    # 获取绝对路径
+    # 使用组件目录下的 calendar.yaml
     component_dir = os.path.dirname(__file__)
-    calendar_path = os.path.join(component_dir, calendar_file)
+    calendar_path = os.path.join(component_dir, "calendar.yaml")
     
     async_add_entities([
-        SmartLHolidaySensor(name, calendar_path, hass),
-        SmartLHolidayCalendar(name, calendar_path, hass)
+        SmartHolidaySensor(name, calendar_path, hass),
+        SmartHolidayCalendar(name, calendar_path, hass)
     ], True)
 
 
-class SmartLHolidaySensor(SensorEntity):
-    """Representation of a SmartL Holiday Sensor."""
+class SmartHolidaySensor(SensorEntity):
+    """Representation of a Smart Holiday Sensor."""
 
     def __init__(self, name: str, calendar_path: str, hass: HomeAssistant) -> None:
         """Initialize the sensor."""
         self._attr_name = name
         self._calendar_path = calendar_path
         self._hass = hass
-        self._attr_unique_id = f"smartl_holiday_{name}"
+        self._attr_unique_id = f"smart_holiday_{name}"
         self._attr_native_value = STATE_WORKDAY
         self._attr_extra_state_attributes = {}
         self._attr_icon = "mdi:calendar"
@@ -222,15 +219,15 @@ class SmartLHolidaySensor(SensorEntity):
         }
 
 
-class SmartLHolidayCalendar(CalendarEntity):
-    """Representation of a SmartL Holiday Calendar."""
+class SmartHolidayCalendar(CalendarEntity):
+    """Representation of a Smart Holiday Calendar."""
 
     def __init__(self, name: str, calendar_path: str, hass: HomeAssistant) -> None:
         """Initialize the calendar."""
         self._attr_name = f"{name} Calendar"
         self._calendar_path = calendar_path
         self._hass = hass
-        self._attr_unique_id = f"smartl_holiday_calendar_{name}"
+        self._attr_unique_id = f"smart_holiday_calendar_{name}"
         self._attr_icon = "mdi:calendar-month"
 
     def _load_calendar_data(self) -> Dict:
@@ -245,12 +242,6 @@ class SmartLHolidayCalendar(CalendarEntity):
 
     def _create_event(self, start_date: date, end_date: date, name: str, source: str) -> CalendarEvent:
         """Create a calendar event with appropriate color."""
-        # 颜色映射
-        colors = {
-            "holidays": "#f44336",  # 红色 - 法定节假日
-            "customdays": "#2196f3",  # 蓝色 - 自定义假期
-        }
-        
         # 调休上班日特殊处理
         if "调休" in name:
             description = "调休上班日"
@@ -330,8 +321,4 @@ class SmartLHolidayCalendar(CalendarEntity):
     @property
     def event(self) -> Optional[CalendarEvent]:
         """Return the next upcoming event."""
-        events = self.hass.async_create_task(
-            self.async_get_events(self.hass, dt.now(), dt.now() + timedelta(days=365))
-        )
-        # 在实际运行时会通过回调获取
         return None

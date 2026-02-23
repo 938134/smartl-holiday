@@ -1,0 +1,12 @@
+{
+  "title": "智能假期",
+  "config": {
+    "step": {
+      "user": {
+        "title": "配置智能假期",
+        "description": "点击提交即可添加智能假期集成",
+        "data": {}
+      }
+    }
+  }
+}

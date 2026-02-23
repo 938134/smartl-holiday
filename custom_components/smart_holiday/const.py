@@ -1,11 +1,8 @@
-"""Constants for SmartL Holiday integration."""
+"""Constants for Smart Holiday integration."""
 
-DOMAIN = "smartl_holiday"
-DEFAULT_NAME = "SmartL Holiday"
+DOMAIN = "smart_holiday"
+DEFAULT_NAME = "Smart Holiday"
 DEFAULT_SCAN_INTERVAL = 3600
-
-# 配置项
-CONF_CALENDAR_FILE = "calendar_file"
 
 # 状态值
 STATE_WORKDAY = "workday"
