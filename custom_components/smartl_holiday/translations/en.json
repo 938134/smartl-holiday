@@ -1,16 +1,15 @@
 {
-    "title": "SmartL Holiday",
-    "config": {
-      "step": {
-        "user": {
-          "title": "Configure SmartL Holiday",
-          "description": "Select calendar configuration file",
-          "data": {
-            "name": "Sensor Name",
-            "calendar_file": "Calendar File",
-            "update_interval": "Update Interval (seconds)"
-          }
+  "title": "SmartL Holiday",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure SmartL Holiday",
+        "description": "Select calendar configuration file",
+        "data": {
+          "name": "Sensor Name",
+          "calendar_file": "Calendar File"
         }
       }
     }
   }
+}

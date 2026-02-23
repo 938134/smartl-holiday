@@ -1,6 +1,7 @@
 """Config flow for SmartL Holiday integration."""
 
 import voluptuous as vol
+import os
 from homeassistant import config_entries
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import selector
@@ -22,8 +23,8 @@ class SmartLHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data=user_input
             )
 
-        # 获取可用的YAML文件列表
-        yaml_files = await self._get_yaml_files()
+        # 获取组件目录下的YAML文件
+        yaml_files = await self._get_component_yaml_files()
         
         data_schema = vol.Schema({
             vol.Required("name", default=DEFAULT_NAME): selector.TextSelector(),
@@ -31,14 +32,6 @@ class SmartLHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 selector.SelectSelectorConfig(
                     options=yaml_files,
                     mode=selector.SelectSelectorMode.DROPDOWN
-                )
-            ),
-            vol.Optional("update_interval", default=3600): selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    min=60,
-                    max=86400,
-                    unit_of_measurement="秒",
-                    mode=selector.NumberSelectorMode.BOX
                 )
             ),
         })
@@ -49,16 +42,13 @@ class SmartLHolidayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors
         )
 
-    async def _get_yaml_files(self) -> list:
-        """Get list of YAML files in config directory."""
-        import os
-        from homeassistant.config import YAML_CONFIG_FILE
-        
-        config_dir = os.path.dirname(self.hass.config.path(YAML_CONFIG_FILE))
+    async def _get_component_yaml_files(self) -> list:
+        """Get list of YAML files in component directory."""
+        component_dir = os.path.dirname(__file__)
         yaml_files = []
         
         try:
-            for file in os.listdir(config_dir):
+            for file in os.listdir(component_dir):
                 if file.endswith(('.yaml', '.yml')):
                     yaml_files.append(file)
         except Exception:

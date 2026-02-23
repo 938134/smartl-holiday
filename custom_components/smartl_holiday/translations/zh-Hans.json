@@ -7,8 +7,7 @@
         "description": "选择日历配置文件",
         "data": {
           "name": "传感器名称",
-          "calendar_file": "日历文件",
-          "update_interval": "更新间隔（秒）"
+          "calendar_file": "日历文件"
         }
       }
     }
