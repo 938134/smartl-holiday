@@ -1,6 +1,6 @@
 {
   "domain": "smart_workday",
-  "name": "Smart Workday",
+  "name": "智能工作日",
   "codeowners": ["@938134"],
   "config_flow": true,
   "dependencies": [],

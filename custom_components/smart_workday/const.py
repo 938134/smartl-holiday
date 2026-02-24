@@ -111,7 +111,7 @@ BINARY_SENSOR_TYPES: Dict[str, Dict[str, str]] = {
         "device_class": "presence",
     },
     ATTR_IS_HOLIDAY: {
-        "name": "假日",
+        "name": "节假日",
         "icon": "mdi:party-popper",
         "device_class": "presence",
     },

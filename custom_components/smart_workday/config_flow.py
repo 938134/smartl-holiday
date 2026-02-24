@@ -41,10 +41,13 @@ class SmartWorkdayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         mode_options = [
             selector.SelectOptionDict(
                 value=mode.value, 
-                label=self._get_mode_label(mode)
+                label=f"{mode.icon} {mode.display_name}"
             )
             for mode in HolidayMode
         ]
+
+        # 构建紧凑的模式说明
+        mode_description = self._build_mode_description()
 
         return self.async_show_form(
             step_id="user",
@@ -57,16 +60,16 @@ class SmartWorkdayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     )
                 ),
             }),
-            description_placeholders={}
+            description_placeholders={"mode_description": mode_description}
         )
 
-    def _get_mode_label(self, mode: HolidayMode) -> str:
-        """获取模式标签（从语言文件）"""
-        # 这里会从hass的翻译中获取，但config flow中无法直接访问
-        # 暂时用硬编码，实际运行时会被translations覆盖
-        icons = {HolidayMode.WAGE: "👔", HolidayMode.STUDENT: "📚", HolidayMode.FREE: "🌟"}
-        names = {HolidayMode.WAGE: "工薪模式", HolidayMode.STUDENT: "学生模式", HolidayMode.FREE: "自由模式"}
-        return f"{icons[mode]} {names[mode]}"
+    def _build_mode_description(self) -> str:
+        """构建紧凑的模式说明"""
+        lines = []
+        lines.append("📌 **假期模式**")
+        for mode in HolidayMode:
+            lines.append(f"  • {mode.icon} {mode.display_name}：{mode.description}")
+        return "\n".join(lines)
 
     @staticmethod
     def async_get_options_flow(config_entry):
@@ -117,48 +120,15 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
             return DEFAULT_YAML_TEMPLATE
 
     def _build_sections_text(self) -> str:
-        """构建分节说明文本（从语言文件读取）"""
-        # 实际运行时，这些文本会从 translations 文件中读取
-        # 这里写的是默认内容
-        sections = []
-        
-        # 模式说明
-        sections.append("## 📌 假期模式说明\n")
-        sections.append("请选择适合您的假期计算模式：\n")
-        for mode in HolidayMode:
-            sections.append(f"• {mode.icon} **{mode.display_name}**：{mode.description}\n")
-        sections.append("\n---\n\n")
-        
-        # 假期类型说明
-        sections.append("## 📋 假期类型说明\n\n")
-        sections.append("假期配置文件支持三种类型：\n\n")
-        sections.append("• **holidays**：法定节假日（包含调休）- 工薪模式、学生模式生效\n")
-        sections.append("• **customdays**：自定义假期 - 所有模式生效\n")
-        sections.append("• **schooldays**：学校假期 - 仅学生模式生效\n\n")
-        sections.append("---\n\n")
-        
-        # 编辑技巧
-        sections.append("## 💡 YAML编辑技巧\n\n")
-        sections.append("• 使用 `Tab` 键缩进，`Shift+Tab` 反向缩进\n")
-        sections.append("• 行首添加 `#` 可以注释整行\n")
-        sections.append("• 每个层级使用2空格缩进\n\n")
-        sections.append("**事件格式示例：**\n")
-        sections.append("```yaml\n")
-        sections.append("# 单天事件\n")
-        sections.append("- date: \"2026-01-01\"\n")
-        sections.append("  name: \"元旦\"\n\n")
-        sections.append("# 范围事件\n")
-        sections.append("- start: \"2026-02-17\"\n")
-        sections.append("  end: \"2026-02-23\"\n")
-        sections.append("  name: \"春节\"\n")
-        sections.append("```\n\n")
-        sections.append("---\n\n")
-        
-        # 当前配置
-        sections.append(f"**当前配置文件**：`{self._calendar_path}`\n\n")
-        sections.append("⚠️ **保存前请确保YAML格式正确，错误的格式会导致配置失败。**")
-        
-        return "".join(sections)
+        """构建紧凑的假期类型说明"""
+        lines = []
+        lines.append("📋 **假期类型**")
+        lines.append("  • **holidays**：法定节假日(含调休) - 工薪/学生模式生效")
+        lines.append("  • **customdays**：自定义假期 - 所有模式生效")
+        lines.append("  • **schooldays**：学校假期 - 仅学生模式生效")
+        lines.append("")
+        lines.append(f"📁 **配置文件**：`{self._calendar_path}`")
+        return "\n".join(lines)
 
     async def _handle_user_input(self, user_input: Dict[str, Any]) -> Dict[str, Any]:
         """处理用户输入"""
@@ -242,7 +212,7 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
             for mode in HolidayMode
         ]
         
-        # 构建分节说明文本
+        # 构建紧凑的假期类型说明
         sections_text = self._build_sections_text()
         
         # 表单架构 - 使用TemplateSelector作为YAML编辑器
