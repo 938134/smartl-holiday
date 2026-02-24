@@ -1,0 +1,84 @@
+{
+  "title": "Smart Workday",
+  
+  "config": {
+      "title": "Configure Smart Workday",
+      "step": {
+          "user": {
+              "title": "Configure Smart Workday",
+              "description": "Please select your holiday calculation mode:\n\n• 👔 **Wage Mode**: National holidays + Custom holidays (for office workers)\n• 📚 **Student Mode**: National holidays + School holidays + Custom holidays (for students, teachers)\n• 🌟 **Free Mode**: Only custom holidays (for freelancers)",
+              "data": {
+                  "name": "Integration Name",
+                  "holiday_mode": "Holiday Mode"
+              }
+          }
+      }
+  },
+  
+  "options": {
+      "title": "Smart Workday Options",
+      "step": {
+          "init": {
+              "title": "Smart Workday Options",
+              "description": "{sections}",
+              "data": {
+                  "holiday_mode": "Holiday Mode",
+                  "yaml_content": "YAML Configuration"
+              },
+              "errors": {
+                  "invalid_yaml": "❌ YAML syntax error",
+                  "invalid_yaml_structure": "❌ Invalid YAML structure, must contain holidays, customdays, schooldays sections",
+                  "save_failed": "❌ Save failed, check permissions",
+                  "empty_content": "❌ Content cannot be empty",
+                  "unknown_error": "❌ Unknown error, check logs"
+              }
+          }
+      }
+  },
+  
+  "sections": {
+      "mode_description": {
+          "title": "Holiday Mode Description",
+          "content": "Please select your holiday calculation mode:\n\n• 👔 **Wage Mode**: National holidays + Custom holidays (for office workers)\n• 📚 **Student Mode**: National holidays + School holidays + Custom holidays (for students, teachers)\n• 🌟 **Free Mode**: Only custom holidays (for freelancers)"
+      },
+      "holiday_types": {
+          "title": "Holiday Types",
+          "content": "The configuration file supports three types:\n\n• **holidays**: National holidays (including workday adjustments) - Effective in Wage and Student modes\n• **customdays**: Custom holidays - Effective in all modes\n• **schooldays**: School holidays - Effective only in Student mode"
+      },
+      "editing_tips": {
+          "title": "YAML Editing Tips",
+          "content": "YAML Editing Tips:\n• Use `Tab` to indent, `Shift+Tab` to unindent\n• Add `#` at line start to comment\n• Use 2 spaces for each indentation level\n\n**Event Format Examples:**\n```yaml\n# Single day event\n- date: \"2026-01-01\"\n  name: \"New Year's Day\"\n\n# Range event\n- start: \"2026-02-17\"\n  end: \"2026-02-23\"\n  name: \"Spring Festival\"\n```",
+          "warning": "⚠️ **Ensure YAML format is correct before saving. Invalid format will cause configuration failure.**"
+      },
+      "current_config": {
+          "title": "Current Configuration",
+          "file_location": "File Location"
+      }
+  },
+  
+  "mode_names": {
+      "wage": "Wage Mode",
+      "student": "Student Mode",
+      "free": "Free Mode"
+  },
+  
+  "mode_icons": {
+      "wage": "👔",
+      "student": "📚",
+      "free": "🌟"
+  },
+  
+  "mode_descriptions": {
+      "wage": "National holidays + Custom holidays (for office workers)",
+      "student": "National holidays + School holidays + Custom holidays (for students, teachers)",
+      "free": "Only custom holidays (for freelancers)"
+  },
+  
+  "state_names": {
+      "workday": "Workday",
+      "workday_special": "Workday (Special)",
+      "holiday": "Holiday",
+      "holiday_custom": "Custom Holiday",
+      "weekend": "Weekend"
+  }
+}

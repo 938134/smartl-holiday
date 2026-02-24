@@ -1,0 +1,12 @@
+{
+  "domain": "smart_workday",
+  "name": "Smart Workday",
+  "codeowners": ["@938134"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/938134/smart-workday",
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "requirements": ["pyyaml>=6.0"],
+  "version": "2.0.0"
+}

@@ -1,0 +1,84 @@
+{
+  "title": "智能工作日",
+  
+  "config": {
+      "title": "配置智能工作日",
+      "step": {
+          "user": {
+              "title": "配置智能工作日",
+              "description": "请选择适合您的假期计算模式：\n\n• 👔 **工薪模式**：法定节假日 + 自定义假期（适合普通上班族）\n• 📚 **学生模式**：法定节假日 + 学校假期 + 自定义假期（适合学生、教师）\n• 🌟 **自由模式**：只有自定义假期算放假（适合自由职业者）",
+              "data": {
+                  "name": "集成名称",
+                  "holiday_mode": "假期计算模式"
+              }
+          }
+      }
+  },
+  
+  "options": {
+      "title": "智能工作日配置",
+      "step": {
+          "init": {
+              "title": "智能工作日配置",
+              "description": "{sections}",
+              "data": {
+                  "holiday_mode": "假期计算模式",
+                  "yaml_content": "YAML假期配置"
+              },
+              "errors": {
+                  "invalid_yaml": "❌ YAML格式错误，请检查语法",
+                  "invalid_yaml_structure": "❌ YAML结构错误，需要包含 holidays、customdays、schooldays 部分",
+                  "save_failed": "❌ 保存文件失败，请检查权限",
+                  "empty_content": "❌ 内容不能为空",
+                  "unknown_error": "❌ 未知错误，请查看日志"
+              }
+          }
+      }
+  },
+  
+  "sections": {
+      "mode_description": {
+          "title": "假期模式说明",
+          "content": "请选择适合您的假期计算模式：\n\n• 👔 **工薪模式**：法定节假日 + 自定义假期（适合普通上班族）\n• 📚 **学生模式**：法定节假日 + 学校假期 + 自定义假期（适合学生、教师）\n• 🌟 **自由模式**：只有自定义假期算放假（适合自由职业者）"
+      },
+      "holiday_types": {
+          "title": "假期类型说明",
+          "content": "假期配置文件支持三种类型：\n\n• **holidays**：法定节假日（包含调休）- 工薪模式、学生模式生效\n• **customdays**：自定义假期 - 所有模式生效\n• **schooldays**：学校假期 - 仅学生模式生效"
+      },
+      "editing_tips": {
+          "title": "YAML编辑技巧",
+          "content": "YAML编辑技巧：\n• 使用 `Tab` 键缩进，`Shift+Tab` 反向缩进\n• 行首添加 `#` 可以注释整行\n• 每个层级使用2空格缩进\n\n**事件格式示例：**\n```yaml\n# 单天事件\n- date: \"2026-01-01\"\n  name: \"元旦\"\n\n# 范围事件\n- start: \"2026-02-17\"\n  end: \"2026-02-23\"\n  name: \"春节\"\n```",
+          "warning": "⚠️ **保存前请确保YAML格式正确，错误的格式会导致配置失败。**"
+      },
+      "current_config": {
+          "title": "当前配置",
+          "file_location": "文件位置"
+      }
+  },
+  
+  "mode_names": {
+      "wage": "工薪模式",
+      "student": "学生模式",
+      "free": "自由模式"
+  },
+  
+  "mode_icons": {
+      "wage": "👔",
+      "student": "📚",
+      "free": "🌟"
+  },
+  
+  "mode_descriptions": {
+      "wage": "法定节假日 + 自定义假期（适合普通上班族）",
+      "student": "法定节假日 + 学校假期 + 自定义假期（适合学生、教师）",
+      "free": "只有自定义假期算放假（适合自由职业者）"
+  },
+  
+  "state_names": {
+      "workday": "工作日",
+      "workday_special": "调休日",
+      "holiday": "节假日",
+      "holiday_custom": "自定义假日",
+      "weekend": "双休日"
+  }
+}
