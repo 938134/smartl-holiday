@@ -1,7 +1,7 @@
 """Coordinator for Smart Workday - 共享数据管理"""
 
 import logging
-from datetime import datetime, timedelta, date  # 添加 date 导入
+from datetime import datetime, timedelta, date
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 
@@ -15,14 +15,12 @@ from .const import (
     WorkdayState,
     ATTR_TODAY_EVENTS,
     ATTR_EVENT_NAMES,
-    ATTR_EVENT_TYPES,
     ATTR_PRIMARY_EVENT,
     ATTR_UPCOMING,
     ATTR_IS_WORKDAY,
     ATTR_IS_HOLIDAY,
     ATTR_IS_WEEKEND,
     ATTR_IS_SPECIAL_WORKDAY,
-    ATTR_IS_SCHOOL_HOLIDAY,
     ATTR_HOLIDAY_MODE,
     WEEKDAY_NAMES,
 )
@@ -43,13 +41,10 @@ class DayInfo:
     is_holiday: bool
     is_weekend: bool
     is_special_workday: bool
-    is_school_holiday: bool
-    holiday_mode: HolidayMode
-    holiday_mode_name: str
-    day_name: str
-    today_events: List[Dict] = field(default_factory=list)
+    mode: HolidayMode  # 改为 mode 更简洁
+    mode_name: str
+    events: List[Dict] = field(default_factory=list)  # 改为 events 更简洁
     event_names: List[str] = field(default_factory=list)
-    event_types: List[str] = field(default_factory=list)
     primary_event: str = ""
     upcoming_days: List[Dict] = field(default_factory=list)
 
@@ -124,9 +119,7 @@ class SmartWorkdayDataManager:
             if is_match(check_date, item):
                 events.append({
                     "name": item.get("name", "节假日"),
-                    "source": "holidays",
-                    "type": "national",
-                    "is_special": "调休" in item.get("name", ""),
+                    "type": "holiday" if "调休" not in item.get("name", "") else "special",
                 })
         
         # 自定义假期
@@ -134,68 +127,61 @@ class SmartWorkdayDataManager:
             if is_match(check_date, item):
                 events.append({
                     "name": item.get("name", "自定义假期"),
-                    "source": "customdays",
                     "type": "custom",
-                    "is_special": False,
                 })
         
-        # 学校假期
-        for item in data.get("schooldays", []):
-            if is_match(check_date, item):
-                events.append({
-                    "name": item.get("name", "学校假期"),
-                    "source": "schooldays",
-                    "type": "school",
-                    "is_special": False,
-                })
+        # 学校假期 - 只有学生模式才添加
+        if self._holiday_mode == HolidayMode.STUDENT:
+            for item in data.get("schooldays", []):
+                if is_match(check_date, item):
+                    events.append({
+                        "name": item.get("name", "学校假期"),
+                        "type": "school",
+                    })
         
         return events
     
     def analyze_day(self, today: date, events: List[Dict]) -> DayInfo:
         """分析一天的状态"""
         flags = {
-            "national_holiday": False,
-            "national_special": False,
-            "custom_holiday": False,
-            "school_holiday": False,
+            "holiday": False,      # 法定节假日
+            "special": False,      # 调休上班
+            "custom": False,       # 自定义假期
+            "school": False,       # 学校假期
         }
         
         event_names = []
-        event_types = []
         
         for e in events:
             event_names.append(e["name"])
-            event_types.append(e["type"])
             
-            if e["source"] == "holidays":
-                if e.get("is_special"):
-                    flags["national_special"] = True
-                else:
-                    flags["national_holiday"] = True
-            elif e["source"] == "customdays":
-                flags["custom_holiday"] = True
-            elif e["source"] == "schooldays":
-                flags["school_holiday"] = True
+            if e["type"] == "holiday":
+                flags["holiday"] = True
+            elif e["type"] == "special":
+                flags["special"] = True
+            elif e["type"] == "custom":
+                flags["custom"] = True
+            elif e["type"] == "school":
+                flags["school"] = True
         
         is_weekend = today.weekday() >= 5
         
         # 确定状态
-        if flags["national_special"]:
+        if flags["special"]:
             state = WorkdayState.WORKDAY_SPECIAL
             is_workday = True
         else:
             has_holiday = False
-            mode = self._holiday_mode
             
-            if mode == HolidayMode.WAGE:
-                has_holiday = flags["national_holiday"] or flags["custom_holiday"]
-            elif mode == HolidayMode.STUDENT:
-                has_holiday = flags["national_holiday"] or flags["school_holiday"] or flags["custom_holiday"]
-            elif mode == HolidayMode.FREE:
-                has_holiday = flags["custom_holiday"]
+            if self._holiday_mode == HolidayMode.WAGE:
+                has_holiday = flags["holiday"] or flags["custom"]
+            elif self._holiday_mode == HolidayMode.STUDENT:
+                has_holiday = flags["holiday"] or flags["school"] or flags["custom"]
+            elif self._holiday_mode == HolidayMode.FREE:
+                has_holiday = flags["custom"]
             
             if has_holiday:
-                state = WorkdayState.HOLIDAY_CUSTOM if flags["custom_holiday"] else WorkdayState.HOLIDAY
+                state = WorkdayState.HOLIDAY_CUSTOM if flags["custom"] else WorkdayState.HOLIDAY
                 is_workday = False
             elif is_weekend:
                 state = WorkdayState.WEEKEND
@@ -204,26 +190,19 @@ class SmartWorkdayDataManager:
                 state = WorkdayState.WORKDAY
                 is_workday = True
         
-        # 生成显示名称
+        # 生成显示名称（简化）
         if is_workday:
-            if flags["national_special"]:
-                day_name = f"{'、'.join(event_names)}上班" if event_names else "调休上班"
+            if flags["special"]:
+                day_name = f"{'、'.join(event_names)}上班"
             else:
                 day_name = "工作日"
         else:
-            affecting = []
-            for i, name in enumerate(event_names):
-                if event_types[i] == "national":
-                    affecting.append(name)
-                elif event_types[i] == "custom":
-                    affecting.append(name)
-                elif event_types[i] == "school" and self._holiday_mode == HolidayMode.STUDENT:
-                    affecting.append(name)
-            
-            if affecting:
-                day_name = f"{'、'.join(affecting)}放假" if len(affecting) > 1 else f"{affecting[0]}放假"
+            if event_names:
+                day_name = f"{'、'.join(event_names)}放假"
+            elif is_weekend:
+                day_name = "周末"
             else:
-                day_name = "周末" if is_weekend else "休息"
+                day_name = "休息"
         
         return DayInfo(
             date=today.isoformat(),
@@ -235,13 +214,10 @@ class SmartWorkdayDataManager:
             is_holiday=state in [WorkdayState.HOLIDAY, WorkdayState.HOLIDAY_CUSTOM],
             is_weekend=state == WorkdayState.WEEKEND,
             is_special_workday=state == WorkdayState.WORKDAY_SPECIAL,
-            is_school_holiday=flags["school_holiday"],
-            holiday_mode=self._holiday_mode,
-            holiday_mode_name=self._holiday_mode.display_name,
-            day_name=day_name,
-            today_events=events,
+            mode=self._holiday_mode,
+            mode_name=self._holiday_mode.display_name,
+            events=events,  # 使用简化的 events
             event_names=list(dict.fromkeys(event_names)),
-            event_types=list(set(event_types)),
             primary_event=event_names[0] if event_names else "",
         )
     
@@ -295,28 +271,39 @@ class SmartWorkdayCoordinator(DataUpdateCoordinator):
             upcoming = await self.hass.async_add_executor_job(
                 self.data_manager.get_upcoming_days, today
             )
-            day_info.upcoming_days = upcoming
             
-            return {
+            # 构建返回数据（简化属性名）
+            data = {
+                # 核心状态
                 "state": day_info.state.value,
                 "state_name": day_info.state_name,
+                
+                # 日期信息
+                "date": day_info.date,
                 "weekday": day_info.weekday,
                 "weekday_name": day_info.weekday_name,
-                ATTR_TODAY_EVENTS: day_info.today_events,
-                ATTR_EVENT_NAMES: day_info.event_names,
-                ATTR_EVENT_TYPES: day_info.event_types,
-                ATTR_PRIMARY_EVENT: day_info.primary_event,
+                
+                # 布尔标志
                 ATTR_IS_WORKDAY: day_info.is_workday,
                 ATTR_IS_HOLIDAY: day_info.is_holiday,
                 ATTR_IS_WEEKEND: day_info.is_weekend,
                 ATTR_IS_SPECIAL_WORKDAY: day_info.is_special_workday,
-                ATTR_IS_SCHOOL_HOLIDAY: day_info.is_school_holiday,
-                ATTR_HOLIDAY_MODE: day_info.holiday_mode.value,
-                "holiday_mode_name": day_info.holiday_mode_name,
-                "day_name": day_info.day_name,
-                ATTR_UPCOMING: day_info.upcoming_days,
-                "today_date": day_info.date,
+                
+                # 模式信息
+                "mode": day_info.mode.value,
+                "mode_name": day_info.mode_name,
+                
+                # 事件信息
+                "events": day_info.events,
+                "event_names": day_info.event_names,
+                "primary_event": day_info.primary_event,
+                
+                # 未来事件
+                "upcoming": upcoming,
             }
+            
+            return data
+            
         except Exception as err:
             _LOGGER.error("更新数据失败: %s", err)
             raise UpdateFailed(f"更新失败: {err}")

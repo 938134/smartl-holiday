@@ -1,114 +1,104 @@
-# Smart Holiday 智能假期
+Smart Workday 智能工作日
+https://img.shields.io/badge/HACS-Custom-41BDF5.svg
+https://img.shields.io/badge/version-2.0.0-blue
 
-[![HACS Custom][hacs-shield]][hacs]
-[![GitHub Release][releases-shield]][releases]
-[![License][license-shield]][license]
+智能工作日是一个 Home Assistant 集成，用于根据法定节假日、学校假期和自定义假期智能判断当天是否为工作日。
 
-[hacs-shield]: https://img.shields.io/badge/HACS-Custom-orange.svg
-[hacs]: https://hacs.xyz/
-[releases-shield]: https://img.shields.io/github/v/release/你的用户名/smart-holiday
-[releases]: https://github.com/你的用户名/smart-holiday/releases
-[license-shield]: https://img.shields.io/github/license/你的用户名/smart-holiday
-[license]: https://github.com/你的用户名/smart-holiday/blob/main/LICENSE
+✨ 功能特点
+多模式支持：工薪模式、学生模式、自由模式
 
-支持中国法定节假日、调休、学校假期、自定义节日的 Home Assistant 集成。
+灵活配置：通过 YAML 文件自定义假期
 
-## 功能特点
+日历集成：在 HA 日历中显示所有假期
 
-- ✅ **法定节假日**：自动识别国家法定节假日
-- ✅ **调休上班日**：正确处理周末调休上班
-- ✅ **自定义假期**：学校假期、佛诞、纪念日等
-- ✅ **双实体设计**：传感器用于自动化，日历用于可视化
-- ✅ **彩色日历**：不同类型假期不同颜色显示
-- ✅ **未来预告**：查看未来7天假期安排
-- ✅ **即装即用**：内置默认日历文件，无需额外配置
+多实体：主传感器 + 5个二进制传感器
 
-## 安装方法
+多语言：支持中文/英文
 
-### HACS 安装（推荐）
-1. 打开 HACS → 右上角菜单 → "自定义仓库"
-2. 仓库地址：`https://github.com/你的用户名/smart-holiday`
-3. 类别：Integration
-4. 点击 "ADD"
-5. 搜索 "Smart Holiday" 并安装
-6. 重启 Home Assistant
+📦 安装
+HACS 安装（推荐）
+打开 HACS → 集成 → 右上角菜单 → 自定义仓库
 
-### 手动安装
-1. 下载最新 Release
-2. 解压到 `custom_components/smart_holiday`
-3. 重启 Home Assistant
+添加仓库：https://github.com/938134/smart-workday
 
-## 配置方法
+搜索 "Smart Workday" 并安装
 
-### 直接添加集成
-1. 设置 → 设备与服务 → 添加集成
-2. 搜索 "Smart Holiday"
-3. 点击提交，无需任何配置
-4. 系统自动使用内置的 `calendar.yaml` 文件
+手动安装
+将 custom_components/smart_workday 文件夹复制到 HA 的 custom_components 目录
 
-### 自定义日历文件（可选）
-如果你想修改假期数据，可以直接编辑：
-`/config/custom_components/smart_holiday/calendar.yaml`
+⚙️ 配置
+首次配置
+设置 → 设备与服务 → 添加集成 → 搜索 "Smart Workday"
 
-## 实体说明
+选择假期模式：
 
-### 传感器 `sensor.smart_holiday`
-用于自动化判断：
+👔 工薪模式：法定节假日 + 自定义假期（上班族）
 
-| 状态 | 含义 | 闹钟规则 |
-|------|------|----------|
-| `workday` | 普通工作日 | ✅ 响 |
-| `workday_special` | 调休上班日 | ✅ 响 |
-| `holiday` | 法定节假日 | ❌ 不响 |
-| `holiday_custom` | 自定义假期 | ❌ 不响 |
-| `weekend` | 普通周末 | ❌ 不响 |
+📚 学生模式：法定节假日 + 学校假期 + 自定义假期（学生/教师）
 
-### 日历 `calendar.smart_holiday`
-用于可视化展示：
+🌟 自由模式：仅自定义假期（自由职业者）
 
-| 事件类型 | 颜色 | 示例 |
-|---------|------|------|
-| 法定节假日 | 🔴 红色 | "国庆节" |
-| 调休上班日 | 🟢 绿色 | "元旦调休" |
-| 自定义假期 | 🔵 蓝色 | "寒假" |
+修改配置
+在集成卡片上点击"配置"，可以：
 
-## 自动化示例
+切换假期模式
 
-```yaml
-alias: 7点10起床闹钟
-triggers:
-  - at: "07:10:00"
-    trigger: time
-conditions:
-  # 工作日或调休上班日才响
-  - condition: template
-    value_template: >
-      {{ states('sensor.smart_holiday') in ['workday', 'workday_special'] }}
-actions:
-  # 主卧小爱：正常播报
-  - action: script.小爱音箱控制
-    data:
-      speaker_name: 主卧小爱同学
-      scene_preset: 起床
-      repeat_times: 1
-      custom_text: >
-        {% set names = state_attr('sensor.smart_holiday', 'event_names') %}
-        {% if names and names|length > 0 %}
-          今天是{{ names|join('、') }}，早上好
-        {% else %}
-          早上好
-        {% endif %}
-  
-  # 小乐小爱：只在没有自定义假期时响
-  - if:
-      - condition: template
-        value_template: >
-          {% set types = state_attr('sensor.smart_holiday', 'event_types') %}
-          {{ 'custom' not in types }}
-    then:
-      - action: script.小爱音箱控制
-        data:
-          speaker_name: 小乐小爱同学
-          scene_preset: 起床
-          repeat_times: 1
-mode: single
+编辑 calendar.yaml 自定义假期
+
+📝 假期配置
+配置文件位于：/config/custom_components/smart_workday/calendar.yaml
+
+配置格式
+yaml
+# 法定节假日（工薪/学生模式生效）
+holidays:
+  - date: "2026-01-01"          # 单天事件
+    name: "元旦"
+  - start: "2026-02-17"         # 范围事件
+    end: "2026-02-23"
+    name: "春节"
+  - date: "2026-01-04"          # 调休上班日
+    name: "元旦调休"
+
+# 自定义假期（所有模式生效）
+customdays:
+  - date: "2026-03-12"
+    name: "植树节"
+
+# 学校假期（仅学生模式生效）
+schooldays:
+  - start: "2026-07-10"
+    end: "2026-08-31"
+    name: "暑假"
+📊 生成的实体
+主传感器
+实体ID：sensor.smart_workday
+
+状态："是/否"（是否为工作日）
+
+属性：包含所有详细信息
+
+二进制传感器
+实体ID	说明
+binary_sensor.smart_workday_workday	是否为工作日
+binary_sensor.smart_workday_holiday	是否为假日
+binary_sensor.smart_workday_weekend	是否为周末
+binary_sensor.smart_workday_special_workday	是否为调休日
+binary_sensor.smart_workday_school_holiday	是否为学校假期
+日历实体
+实体ID：calendar.smart_workday_calendar
+
+显示所有假期事件
+
+
+📚 更新日志
+v2.0.0
+✨ 重构为配置流
+
+✨ 新增日历实体
+
+✨ 新增二进制传感器
+
+✨ 支持多语言
+
+✨ 内置 YAML 编辑器

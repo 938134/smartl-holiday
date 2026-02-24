@@ -38,16 +38,22 @@ class SmartWorkdayBaseEntity(CoordinatorEntity):
         self._attr_should_poll = False
 
 
-class SmartWorkdayMainSensor(SmartWorkdayBaseEntity, SensorEntity):
-    """主传感器 - 返回是否是工作日"""
+class SmartWorkdayMainSensor(SmartWorkdayBaseEntity, BinarySensorEntity):
+    """主传感器 - 返回是否是工作日（作为二进制传感器）"""
     
     def __init__(self, coordinator: SmartWorkdayCoordinator, device_info: DeviceInfo):
         super().__init__(coordinator, device_info, "main", "智能工作日", "mdi:calendar")
+        self._attr_device_class = "workday"  # 自定义设备类
+
+    @property
+    def is_on(self) -> bool:
+        """返回是否是工作日 (True=工作日, False=非工作日)"""
+        return self.coordinator.data.get(ATTR_IS_WORKDAY, False) if self.coordinator.data else False
 
     @property
     def native_value(self) -> str:
-        """返回状态：是/否"""
-        return "是" if self.coordinator.data.get(ATTR_IS_WORKDAY, False) else "否"
+        """返回中文状态显示"""
+        return "是" if self.is_on else "否"
 
     @property
     def extra_state_attributes(self) -> Dict[str, Any]:
@@ -68,6 +74,11 @@ class SmartWorkdayBinarySensor(SmartWorkdayBaseEntity, BinarySensorEntity):
     def is_on(self) -> bool:
         """返回开关状态"""
         return self.coordinator.data.get(self._sensor_type, False) if self.coordinator.data else False
+
+    @property
+    def native_value(self) -> str:
+        """返回中文状态显示"""
+        return "是" if self.is_on else "否"
 
 
 async def async_setup_entry(
