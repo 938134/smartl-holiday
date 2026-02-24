@@ -1,7 +1,6 @@
 """Smart Workday integration."""
 
 import logging
-import os
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -11,7 +10,8 @@ from .coordinator import SmartWorkdayDataManager, SmartWorkdayCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.SENSOR, Platform.CALENDAR]
+# 使用正确的平台名称
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.CALENDAR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

@@ -14,7 +14,6 @@ from .const import (
     DEFAULT_NAME, 
     HolidayMode,
     DEFAULT_YAML_TEMPLATE,
-    YAMLValidationError,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class SmartWorkdayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             )
 
-        # 模式选项 - 从语言文件读取
+        # 模式选项
         mode_options = [
             selector.SelectOptionDict(
                 value=mode.value, 
@@ -125,7 +124,7 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
         lines.append("📋 **假期类型**")
         lines.append("  • **holidays**：法定节假日(含调休) - 工薪/学生模式生效")
         lines.append("  • **customdays**：自定义假期 - 所有模式生效")
-        lines.append("  • **schooldays**：学校假期 - 仅学生模式生效")
+        lines.append("  • **studentdays**：学生假期 - 仅学生模式生效")  # 修改这里
         lines.append("")
         lines.append(f"📁 **配置文件**：`{self._calendar_path}`")
         return "\n".join(lines)
@@ -215,7 +214,7 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
         # 构建紧凑的假期类型说明
         sections_text = self._build_sections_text()
         
-        # 表单架构 - 使用TemplateSelector作为YAML编辑器
+        # 表单架构
         schema = vol.Schema({
             vol.Required("holiday_mode", default=current_mode): selector.SelectSelector(
                 selector.SelectSelectorConfig(
