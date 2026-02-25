@@ -37,7 +37,7 @@ class DayInfo:
     is_holiday: bool
     is_weekend: bool
     is_special_workday: bool
-    is_student_holiday: bool  # 添加学生假期标志
+    is_student_holiday: bool  # 独立标志，不影响工作日判断
     mode: HolidayMode
     mode_name: str
     events: List[Dict] = field(default_factory=list)
@@ -54,7 +54,7 @@ class SmartWorkdayDataManager:
         self.calendar_path = calendar_path
         self._data_cache = None
         self._last_loaded = None
-        self._holiday_mode = HolidayMode.WAGE
+        self._holiday_mode = HolidayMode.STANDARD
         
     def update_holiday_mode(self, mode: HolidayMode):
         """更新假期模式"""
@@ -80,7 +80,7 @@ class SmartWorkdayDataManager:
                 data = yaml.safe_load(f) or {}
                 data.setdefault("holidays", [])
                 data.setdefault("customdays", [])
-                data.setdefault("studentdays", [])  # 从 schooldays 改为 studentdays
+                data.setdefault("studentdays", [])
                 
                 self._data_cache = data
                 self._last_loaded = now
@@ -127,14 +127,13 @@ class SmartWorkdayDataManager:
                     "type": "custom",
                 })
         
-        # 学生假期 - 只有学生模式才添加
-        if self._holiday_mode == HolidayMode.STUDENT:
-            for item in data.get("studentdays", []):  # 从 schooldays 改为 studentdays
-                if is_match(check_date, item):
-                    events.append({
-                        "name": item.get("name", "学生假期"),
-                        "type": "student",  # 改为 student
-                    })
+        # 学生假期 - 独立事件，不影响工作日判断
+        for item in data.get("studentdays", []):
+            if is_match(check_date, item):
+                events.append({
+                    "name": item.get("name", "学生假期"),
+                    "type": "student",
+                })
         
         return events
     
@@ -144,7 +143,7 @@ class SmartWorkdayDataManager:
             "holiday": False,
             "special": False,
             "custom": False,
-            "student": False,  # 改为 student
+            "student": False,  # 独立标志
         }
         
         event_names = []
@@ -158,23 +157,23 @@ class SmartWorkdayDataManager:
                 flags["special"] = True
             elif e["type"] == "custom":
                 flags["custom"] = True
-            elif e["type"] == "student":  # 改为 student
-                flags["student"] = True
+            elif e["type"] == "student":
+                flags["student"] = True  # 只记录，不影响工作日判断
         
         is_weekend = today.weekday() >= 5
         
-        # 确定状态
+        # 工作日判断逻辑（和学生假期无关）
         if flags["special"]:
             state = WorkdayState.WORKDAY_SPECIAL
             is_workday = True
         else:
             has_holiday = False
             
-            if self._holiday_mode == HolidayMode.WAGE:
+            if self._holiday_mode == HolidayMode.STANDARD:
+                # 标准模式：法定假日、自定义假期算放假
                 has_holiday = flags["holiday"] or flags["custom"]
-            elif self._holiday_mode == HolidayMode.STUDENT:
-                has_holiday = flags["holiday"] or flags["student"] or flags["custom"]  # 改为 student
-            elif self._holiday_mode == HolidayMode.FREE:
+            elif self._holiday_mode == HolidayMode.CUSTOM:
+                # 自由模式：只有自定义假期算放假
                 has_holiday = flags["custom"]
             
             if has_holiday:
@@ -211,7 +210,7 @@ class SmartWorkdayDataManager:
             is_holiday=state in [WorkdayState.HOLIDAY, WorkdayState.HOLIDAY_CUSTOM],
             is_weekend=state == WorkdayState.WEEKEND,
             is_special_workday=state == WorkdayState.WORKDAY_SPECIAL,
-            is_student_holiday=flags["student"],  # 添加学生假期标志
+            is_student_holiday=flags["student"],  # 独立标志
             mode=self._holiday_mode,
             mode_name=self._holiday_mode.display_name,
             events=events,
@@ -281,12 +280,12 @@ class SmartWorkdayCoordinator(DataUpdateCoordinator):
                 "weekday": day_info.weekday,
                 "weekday_name": day_info.weekday_name,
                 
-                # 布尔标志 - 这些都会成为二进制传感器
+                # 布尔标志
                 ATTR_IS_WORKDAY: day_info.is_workday,
                 ATTR_IS_HOLIDAY: day_info.is_holiday,
                 ATTR_IS_WEEKEND: day_info.is_weekend,
                 ATTR_IS_SPECIAL_WORKDAY: day_info.is_special_workday,
-                ATTR_IS_STUDENT_HOLIDAY: day_info.is_student_holiday,
+                ATTR_IS_STUDENT_HOLIDAY: day_info.is_student_holiday,  # 独立标志
                 
                 # 模式信息
                 "mode": day_info.mode.value,

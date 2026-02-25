@@ -31,7 +31,7 @@ class SmartWorkdayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 title=user_input.get("name", DEFAULT_NAME),
                 data={
                     "name": user_input.get("name", DEFAULT_NAME),
-                    "holiday_mode": user_input.get("holiday_mode", HolidayMode.WAGE.value),
+                    "holiday_mode": user_input.get("holiday_mode", HolidayMode.STANDARD.value),
                     "calendar_file": "calendar.yaml",
                 }
             )
@@ -40,35 +40,23 @@ class SmartWorkdayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         mode_options = [
             selector.SelectOptionDict(
                 value=mode.value, 
-                label=f"{mode.icon} {mode.display_name}"
+                label=f"{mode.icon} {mode.display_name} - {mode.description}"
             )
             for mode in HolidayMode
         ]
-
-        # 构建紧凑的模式说明
-        mode_description = self._build_mode_description()
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required("name", default=DEFAULT_NAME): selector.TextSelector(),
-                vol.Required("holiday_mode", default=HolidayMode.WAGE.value): selector.SelectSelector(
+                vol.Required("holiday_mode", default=HolidayMode.STANDARD.value): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=mode_options,
                         mode="dropdown",
                     )
                 ),
             }),
-            description_placeholders={"mode_description": mode_description}
         )
-
-    def _build_mode_description(self) -> str:
-        """构建紧凑的模式说明"""
-        lines = []
-        lines.append("📌 **假期模式**")
-        for mode in HolidayMode:
-            lines.append(f"  • {mode.icon} {mode.display_name}：{mode.description}")
-        return "\n".join(lines)
 
     @staticmethod
     def async_get_options_flow(config_entry):
@@ -119,12 +107,12 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
             return DEFAULT_YAML_TEMPLATE
 
     def _build_sections_text(self) -> str:
-        """构建紧凑的假期类型说明"""
+        """构建假期类型说明"""
         lines = []
         lines.append("📋 **假期类型**")
-        lines.append("  • **holidays**：法定节假日(含调休) - 工薪/学生模式生效")
+        lines.append("  • **holidays**：法定节假日(含调休) - 标准模式生效")
         lines.append("  • **customdays**：自定义假期 - 所有模式生效")
-        lines.append("  • **studentdays**：学生假期 - 仅学生模式生效")  # 修改这里
+        lines.append("  • **studentdays**：学生假期 - 独立传感器")
         lines.append("")
         lines.append(f"📁 **配置文件**：`{self._calendar_path}`")
         return "\n".join(lines)
@@ -156,10 +144,10 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
                 # 确保必要的键存在
                 data.setdefault("holidays", [])
                 data.setdefault("customdays", [])
-                data.setdefault("schooldays", [])
+                data.setdefault("studentdays", [])
                 
                 # 验证数据结构
-                for key in ["holidays", "customdays", "schooldays"]:
+                for key in ["holidays", "customdays", "studentdays"]:
                     if not isinstance(data[key], list):
                         errors["yaml_content"] = "invalid_yaml_structure"
                         return await self._show_form(errors)
@@ -200,18 +188,18 @@ class SmartWorkdayOptionsFlow(config_entries.OptionsFlow):
 
     async def _show_form(self, errors: Dict[str, str]):
         """显示配置表单"""
-        current_mode = self._config_entry.data.get("holiday_mode", HolidayMode.WAGE.value)
+        current_mode = self._config_entry.data.get("holiday_mode", HolidayMode.STANDARD.value)
         
         # 模式选项
         mode_options = [
             selector.SelectOptionDict(
                 value=mode.value, 
-                label=f"{mode.icon} {mode.display_name}"
+                label=f"{mode.icon} {mode.display_name} - {mode.description}"
             )
             for mode in HolidayMode
         ]
         
-        # 构建紧凑的假期类型说明
+        # 构建假期类型说明
         sections_text = self._build_sections_text()
         
         # 表单架构

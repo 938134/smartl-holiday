@@ -9,9 +9,8 @@ DEFAULT_NAME: Final = "智能工作日"
 
 class HolidayMode(str, Enum):
     """假期模式"""
-    WAGE = "wage"      # 工薪模式：法定+自定义
-    STUDENT = "student"  # 学生模式：法定+学生+自定义
-    FREE = "free"      # 自由模式：只有自定义
+    STANDARD = "standard"  # 标准模式：法定+自定义
+    CUSTOM = "custom"      # 自由模式：仅自定义
 
     @property
     def display_name(self) -> str:
@@ -31,23 +30,20 @@ class HolidayMode(str, Enum):
 
 # 模式名称映射
 _MODE_NAMES: Dict[HolidayMode, str] = {
-    HolidayMode.WAGE: "工薪模式",
-    HolidayMode.STUDENT: "学生模式",
-    HolidayMode.FREE: "自由模式",
+    HolidayMode.STANDARD: "标准模式",
+    HolidayMode.CUSTOM: "自由模式",
 }
 
 # 模式描述映射
 _MODE_DESCRIPTIONS: Dict[HolidayMode, str] = {
-    HolidayMode.WAGE: "法定节假日 + 自定义假期",
-    HolidayMode.STUDENT: "法定节假日 + 学生假期 + 自定义假期",
-    HolidayMode.FREE: "只有自定义假期算放假",
+    HolidayMode.STANDARD: "法定节假日 + 自定义假期",
+    HolidayMode.CUSTOM: "只有自定义假期算放假",
 }
 
 # 模式图标映射
 _MODE_ICONS: Dict[HolidayMode, str] = {
-    HolidayMode.WAGE: "👔",
-    HolidayMode.STUDENT: "📚",
-    HolidayMode.FREE: "🌟",
+    HolidayMode.STANDARD: "📅",
+    HolidayMode.CUSTOM: "🌟",
 }
 
 
@@ -69,7 +65,7 @@ class WorkdayState(str, Enum):
 _STATE_NAMES: Dict[WorkdayState, str] = {
     WorkdayState.WORKDAY: "工作日",
     WorkdayState.WORKDAY_SPECIAL: "调休日",
-    WorkdayState.HOLIDAY: "假日",
+    WorkdayState.HOLIDAY: "节假日",
     WorkdayState.HOLIDAY_CUSTOM: "自定义假日",
     WorkdayState.WEEKEND: "双休日",
 }
@@ -83,32 +79,12 @@ ATTR_IS_SPECIAL_WORKDAY: Final = "is_special_workday"
 ATTR_IS_STUDENT_HOLIDAY: Final = "is_student_holiday"
 
 
-# 二进制传感器配置 - 修改 device_class 让所有传感器都显示"开启"/"关闭"
+# 二进制传感器配置 - 只保留学生假期传感器
 BINARY_SENSOR_TYPES: Dict[str, Dict[str, str]] = {
-    ATTR_IS_WORKDAY: {
-        "name": "工作日",
-        "icon": "mdi:briefcase",
-        "device_class": None,  # 设为 None 显示"开启"/"关闭"
-    },
-    ATTR_IS_HOLIDAY: {
-        "name": "假日",
-        "icon": "mdi:party-popper",
-        "device_class": None,  # 设为 None 显示"开启"/"关闭"
-    },
-    ATTR_IS_WEEKEND: {
-        "name": "双休日",
-        "icon": "mdi:weather-sunny",
-        "device_class": None,  # 设为 None 显示"开启"/"关闭"
-    },
-    ATTR_IS_SPECIAL_WORKDAY: {
-        "name": "调休日",
-        "icon": "mdi:alert",
-        "device_class": None,  # 设为 None 显示"开启"/"关闭"
-    },
     ATTR_IS_STUDENT_HOLIDAY: {
         "name": "学生假期",
         "icon": "mdi:school",
-        "device_class": None,  # 设为 None 显示"开启"/"关闭"
+        "device_class": None,
     },
 }
 
@@ -131,7 +107,7 @@ customdays:
   # - date: "2026-03-12"
   #   name: "植树节"
 
-# 学生假期（仅学生模式生效）
+# 学生假期（独立传感器）
 studentdays:
   # - start: "2026-01-20"
   #   end: "2026-02-15"

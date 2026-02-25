@@ -25,7 +25,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SmartWorkdayBaseEntity(CoordinatorEntity, BinarySensorEntity):
-    """传感器基础类 - 所有传感器都继承BinarySensorEntity"""
+    """传感器基础类"""
     
     def __init__(self, coordinator: SmartWorkdayCoordinator, device_info: DeviceInfo, 
                  unique_id: str, name: str, icon: str, device_class: str = None):
@@ -49,7 +49,7 @@ class SmartWorkdayBaseEntity(CoordinatorEntity, BinarySensorEntity):
         return "是" if self.is_on else "否"
 
 
-class SmartWorkdayMainSensor(SmartWorkdayBaseEntity):
+class SmartWorkdaySensor(SmartWorkdayBaseEntity):
     """主传感器 - 返回是否是工作日"""
     
     def __init__(self, coordinator: SmartWorkdayCoordinator, device_info: DeviceInfo):
@@ -67,18 +67,17 @@ class SmartWorkdayMainSensor(SmartWorkdayBaseEntity):
 
 
 class SmartWorkdayBinarySensor(SmartWorkdayBaseEntity):
-    """二进制传感器 - 各种布尔状态"""
+    """二进制传感器 - 学生假期"""
     
     def __init__(self, coordinator: SmartWorkdayCoordinator, sensor_type: str, 
                  name: str, device_info: DeviceInfo, config: Dict[str, str]):
-        # device_class 为 None 时不传递
         super().__init__(
             coordinator, 
             device_info, 
             sensor_type, 
             name, 
             config["icon"],
-            config.get("device_class")  # 如果为 None 就不设置 device_class
+            config.get("device_class")
         )
         self._sensor_type = sensor_type
 
@@ -103,16 +102,16 @@ async def async_setup_entry(
         name=entry.data.get("name", "智能工作日"),
         manufacturer="Smart Workday",
         model="工作日传感器",
-        sw_version="2.0.0",
+        sw_version="2.1.0",
     )
     
-    entities = [SmartWorkdayMainSensor(coordinator, device_info)]
+    entities = [SmartWorkdaySensor(coordinator, device_info)]
     
-    # 添加所有二进制传感器
+    # 添加学生假期传感器
     for sensor_type, config in BINARY_SENSOR_TYPES.items():
         entities.append(SmartWorkdayBinarySensor(
             coordinator, sensor_type, config["name"], device_info, config
         ))
     
     async_add_entities(entities)
-    _LOGGER.info("已添加 %d 个二进制传感器实体", len(entities))
+    _LOGGER.info("已添加 %d 个实体", len(entities))
